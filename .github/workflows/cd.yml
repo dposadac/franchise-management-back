@@ -1,0 +1,189 @@
+name: CD - Deploy
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target environment'
+        required: true
+        default: 'qa'
+        type: choice
+        options: [ qa, pdn ]
+      cloud_provider:
+        description: 'Cloud provider'
+        required: true
+        default: 'aws'
+        type: choice
+        options: [ aws, azure, gcp ]
+
+env:
+  APP_ENV: ${{ github.event.inputs.environment || 'qa' }}
+  CLOUD: ${{ github.event.inputs.cloud_provider || vars.CLOUD_PROVIDER || 'aws' }}
+
+jobs:
+  # ─────────────────────────────────────────
+  # Stage 1: Build JAR + Docker image
+  # ─────────────────────────────────────────
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ github.sha }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Build JAR
+        run: mvn clean package -DskipTests
+
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: target/*.jar
+
+  # ─────────────────────────────────────────
+  # Stage 2a: Deploy to AWS (ECS / ECR)
+  # ─────────────────────────────────────────
+  deploy-aws:
+    name: Deploy → AWS
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.cloud_provider == 'aws' || vars.CLOUD_PROVIDER == 'aws' }}
+    environment: ${{ github.event.inputs.environment || 'qa' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'us-east-1' }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build & push image to ECR
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          ECR_REPOSITORY: franchise-management-back
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+
+      - name: Force ECS deployment
+        run: |
+          aws ecs update-service \
+            --cluster ${{ vars.ECS_CLUSTER }} \
+            --service ${{ vars.ECS_SERVICE }} \
+            --force-new-deployment \
+            --region ${{ vars.AWS_REGION || 'us-east-1' }}
+
+  # ─────────────────────────────────────────
+  # Stage 2b: Deploy to Azure (App Service / ACR)
+  # ─────────────────────────────────────────
+  deploy-azure:
+    name: Deploy → Azure
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.cloud_provider == 'azure' || vars.CLOUD_PROVIDER == 'azure' }}
+    environment: ${{ github.event.inputs.environment || 'qa' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Login to Azure
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      - name: Login to Azure Container Registry
+        uses: azure/docker-login@v1
+        with:
+          login-server: ${{ vars.ACR_LOGIN_SERVER }}
+          username: ${{ secrets.ACR_USERNAME }}
+          password: ${{ secrets.ACR_PASSWORD }}
+
+      - name: Build & push image to ACR
+        run: |
+          docker build -t ${{ vars.ACR_LOGIN_SERVER }}/franchise-management-back:${{ github.sha }} .
+          docker push ${{ vars.ACR_LOGIN_SERVER }}/franchise-management-back:${{ github.sha }}
+
+      - name: Deploy to Azure App Service
+        uses: azure/webapps-deploy@v3
+        with:
+          app-name: ${{ vars.AZURE_APP_NAME }}
+          images: ${{ vars.ACR_LOGIN_SERVER }}/franchise-management-back:${{ github.sha }}
+
+  # ─────────────────────────────────────────
+  # Stage 2c: Deploy to GCP (Cloud Run / Artifact Registry)
+  # ─────────────────────────────────────────
+  deploy-gcp:
+    name: Deploy → GCP
+    needs: build
+    runs-on: ubuntu-latest
+    if: ${{ github.event.inputs.cloud_provider == 'gcp' || vars.CLOUD_PROVIDER == 'gcp' }}
+    environment: ${{ github.event.inputs.environment || 'qa' }}
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download JAR
+        uses: actions/download-artifact@v4
+        with:
+          name: app-jar
+          path: target/
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ vars.GCP_REGION }}-docker.pkg.dev
+
+      - name: Build & push image to Artifact Registry
+        env:
+          IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/franchise-management-back/franchise-management-back:${{ github.sha }}
+        run: |
+          docker build -t $IMAGE .
+          docker push $IMAGE
+
+      - name: Deploy to Cloud Run
+        env:
+          IMAGE: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/franchise-management-back/franchise-management-back:${{ github.sha }}
+        run: |
+          gcloud run deploy franchise-management-back \
+            --image $IMAGE \
+            --region ${{ vars.GCP_REGION }} \
+            --platform managed \
+            --allow-unauthenticated \
+            --set-env-vars="APP_PROFILE=${{ env.APP_ENV }},DB_URL=${{ secrets.DB_URL }},DB_USERNAME=${{ secrets.DB_USERNAME }},DB_PASSWORD=${{ secrets.DB_PASSWORD }},DB_DRIVER=${{ secrets.DB_DRIVER }},DB_PLATFORM=${{ secrets.DB_PLATFORM }},CLOUD_PROVIDER=gcp,GCP_PROJECT_ID=${{ vars.GCP_PROJECT_ID }}"

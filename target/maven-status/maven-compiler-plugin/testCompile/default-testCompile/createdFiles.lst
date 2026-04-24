@@ -1,0 +1,8 @@
+com\accenture\franchise\application\usecase\GetFranchisesUseCaseTest.class
+com\accenture\franchise\application\usecase\UpdateFranchiseUseCaseTest.class
+com\accenture\franchise\application\usecase\DeleteFranchiseUseCaseTest.class
+com\accenture\franchise\infrastructure\entrypoints\FranchiseControllerIntegrationTest.class
+com\accenture\franchise\application\usecase\CreateFranchiseUseCaseTest.class
+com\accenture\franchise\application\usecase\GetFranchiseByIdUseCaseTest.class
+com\accenture\franchise\application\mapper\FranchiseMapperTest.class
+com\accenture\franchise\domain\service\FranchiseValidationServiceTest.class
