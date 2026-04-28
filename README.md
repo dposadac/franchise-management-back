@@ -43,9 +43,8 @@ src/main/java/com/accenture/franchise/
 ```
 
 ## Classes Diagram model
+![alt text](E-R.png)
 
-![alt text](Analisis_Sistema_Ventas_Franquicia-03_DiagramaClases.jpg)
----
 
 ## Prerequisites
 
