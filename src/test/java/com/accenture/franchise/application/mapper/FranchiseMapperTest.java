@@ -2,12 +2,11 @@ package com.accenture.franchise.application.mapper;
 
 import com.accenture.franchise.application.dto.FranchiseRequest;
 import com.accenture.franchise.application.dto.FranchiseResponse;
-import com.accenture.franchise.domain.model.Franchise;
-import com.accenture.franchise.domain.model.FranchiseStatus;
+import com.accenture.franchise.domain.model.Franquicia;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -21,41 +20,37 @@ class FranchiseMapperTest {
     }
 
     @Test
-    void toDomain_mapsAllFields_andGeneratesId() {
-        FranchiseRequest request = new FranchiseRequest("Name", "Address", "555-1234", "email@test.com");
+    void toDomain_mapsNameAndGeneratesId() {
+        FranchiseRequest request = new FranchiseRequest("TestFranchise");
 
-        Franchise domain = mapper.toDomain(request);
+        Franquicia domain = mapper.toDomain(request);
 
-        assertThat(domain.getId()).isNotNull();
-        assertThat(domain.getName()).isEqualTo("Name");
-        assertThat(domain.getAddress()).isEqualTo("Address");
-        assertThat(domain.getPhone()).isEqualTo("555-1234");
-        assertThat(domain.getEmail()).isEqualTo("email@test.com");
-        assertThat(domain.getStatus()).isEqualTo(FranchiseStatus.ACTIVE);
+        assertThat(domain.getIdFranquicia()).isNotNull();
+        assertThat(domain.getNombre()).isEqualTo("TestFranchise");
+        assertThat(domain.getFechaCreacion()).isNotNull();
+        assertThat(domain.getFechaActualizacion()).isNotNull();
     }
 
     @Test
     void toDomain_generatesDifferentIdEachTime() {
-        FranchiseRequest request = new FranchiseRequest("Name", "Addr", "123", "a@b.com");
+        FranchiseRequest request = new FranchiseRequest("Name");
 
-        Franchise domain1 = mapper.toDomain(request);
-        Franchise domain2 = mapper.toDomain(request);
+        Franquicia domain1 = mapper.toDomain(request);
+        Franquicia domain2 = mapper.toDomain(request);
 
-        assertThat(domain1.getId()).isNotEqualTo(domain2.getId());
+        assertThat(domain1.getIdFranquicia()).isNotEqualTo(domain2.getIdFranquicia());
     }
 
     @Test
     void toResponse_mapsAllFields() {
-        UUID id = UUID.randomUUID();
-        Franchise franchise = new Franchise(id, "Name", "Addr", "123", "email@test.com", FranchiseStatus.INACTIVE);
+        LocalDateTime now = LocalDateTime.now();
+        Franquicia franchise = new Franquicia("id-123", "MyFranchise", now, now);
 
         FranchiseResponse response = mapper.toResponse(franchise);
 
-        assertThat(response.id()).isEqualTo(id);
-        assertThat(response.name()).isEqualTo("Name");
-        assertThat(response.address()).isEqualTo("Addr");
-        assertThat(response.phone()).isEqualTo("123");
-        assertThat(response.email()).isEqualTo("email@test.com");
-        assertThat(response.status()).isEqualTo(FranchiseStatus.INACTIVE);
+        assertThat(response.id()).isEqualTo("id-123");
+        assertThat(response.name()).isEqualTo("MyFranchise");
+        assertThat(response.creationDate()).isEqualTo(now);
+        assertThat(response.lastUpdated()).isEqualTo(now);
     }
 }

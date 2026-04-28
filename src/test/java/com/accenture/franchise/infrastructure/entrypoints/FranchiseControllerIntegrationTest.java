@@ -2,7 +2,7 @@ package com.accenture.franchise.infrastructure.entrypoints;
 
 import com.accenture.franchise.application.dto.FranchiseRequest;
 import com.accenture.franchise.application.dto.UpdateFranchiseRequest;
-import com.accenture.franchise.infrastructure.drivenadapters.jpa.JpaFranchiseRepositorySpring;
+import com.accenture.franchise.infrastructure.drivenadapters.jpa.JpaFranquiciaRepositorySpring;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.util.UUID;
@@ -20,11 +21,12 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
+@ActiveProfiles("test")
 class FranchiseControllerIntegrationTest {
 
     @Autowired private MockMvc mockMvc;
     @Autowired private ObjectMapper objectMapper;
-    @Autowired private JpaFranchiseRepositorySpring jpaRepository;
+    @Autowired private JpaFranquiciaRepositorySpring jpaRepository;
 
     @BeforeEach
     void setUp() {
@@ -33,20 +35,19 @@ class FranchiseControllerIntegrationTest {
 
     @Test
     void createFranchise_validRequest_returnsCreated() throws Exception {
-        FranchiseRequest request = new FranchiseRequest("Test Franchise", "123 Main St", "555-1234", "test@franchise.com");
+        FranchiseRequest request = new FranchiseRequest("Test Franchise");
 
         mockMvc.perform(post("/api/franchises")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").isNotEmpty())
-                .andExpect(jsonPath("$.name").value("Test Franchise"))
-                .andExpect(jsonPath("$.status").value("ACTIVE"));
+                .andExpect(jsonPath("$.name").value("Test Franchise"));
     }
 
     @Test
-    void createFranchise_invalidRequest_returns400WithErrors() throws Exception {
-        FranchiseRequest request = new FranchiseRequest("", "Addr", "123", "not-an-email");
+    void createFranchise_blankName_returns400WithErrors() throws Exception {
+        FranchiseRequest request = new FranchiseRequest("");
 
         mockMvc.perform(post("/api/franchises")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -57,7 +58,7 @@ class FranchiseControllerIntegrationTest {
 
     @Test
     void getAllFranchises_returnsOkWithList() throws Exception {
-        FranchiseRequest request = new FranchiseRequest("Franchise A", "Addr A", "111", "a@test.com");
+        FranchiseRequest request = new FranchiseRequest("Franchise A");
         mockMvc.perform(post("/api/franchises")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(objectMapper.writeValueAsString(request)));
@@ -69,7 +70,7 @@ class FranchiseControllerIntegrationTest {
 
     @Test
     void getFranchiseById_existingId_returnsOk() throws Exception {
-        FranchiseRequest request = new FranchiseRequest("My Franchise", "456 St", "999", "my@test.com");
+        FranchiseRequest request = new FranchiseRequest("My Franchise");
         String body = mockMvc.perform(post("/api/franchises")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -91,7 +92,7 @@ class FranchiseControllerIntegrationTest {
 
     @Test
     void updateFranchise_existingId_returnsOk() throws Exception {
-        FranchiseRequest createRequest = new FranchiseRequest("Original", "Orig Addr", "111", "orig@test.com");
+        FranchiseRequest createRequest = new FranchiseRequest("Original");
         String body = mockMvc.perform(post("/api/franchises")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(createRequest)))
@@ -99,18 +100,17 @@ class FranchiseControllerIntegrationTest {
 
         String id = objectMapper.readTree(body).get("id").asText();
 
-        UpdateFranchiseRequest updateRequest = new UpdateFranchiseRequest("Updated", "New Addr", "222", "updated@test.com");
+        UpdateFranchiseRequest updateRequest = new UpdateFranchiseRequest("Updated");
         mockMvc.perform(put("/api/franchises/{id}", id)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(updateRequest)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.name").value("Updated"))
-                .andExpect(jsonPath("$.email").value("updated@test.com"));
+                .andExpect(jsonPath("$.name").value("Updated"));
     }
 
     @Test
     void updateFranchise_nonExistingId_returns404() throws Exception {
-        UpdateFranchiseRequest request = new UpdateFranchiseRequest("Name", "Addr", "123", "a@b.com");
+        UpdateFranchiseRequest request = new UpdateFranchiseRequest("Name");
         mockMvc.perform(put("/api/franchises/{id}", UUID.randomUUID())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))
@@ -119,7 +119,7 @@ class FranchiseControllerIntegrationTest {
 
     @Test
     void deleteFranchise_existingId_returnsNoContent() throws Exception {
-        FranchiseRequest request = new FranchiseRequest("To Delete", "Addr", "123", "del@test.com");
+        FranchiseRequest request = new FranchiseRequest("To Delete");
         String body = mockMvc.perform(post("/api/franchises")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(request)))

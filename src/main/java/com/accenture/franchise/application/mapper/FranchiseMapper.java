@@ -2,32 +2,28 @@ package com.accenture.franchise.application.mapper;
 
 import com.accenture.franchise.application.dto.FranchiseRequest;
 import com.accenture.franchise.application.dto.FranchiseResponse;
-import com.accenture.franchise.domain.model.Franchise;
-import com.accenture.franchise.domain.model.FranchiseStatus;
+import com.accenture.franchise.domain.model.Franquicia;
+import com.accenture.franchise.infrastructure.shared.DateUtils;
 
 import java.util.UUID;
 
 public class FranchiseMapper {
 
-    public Franchise toDomain(FranchiseRequest request) {
-        return new Franchise(
-                UUID.randomUUID(),
+    public Franquicia toDomain(FranchiseRequest request) {
+        return new Franquicia(
+                UUID.randomUUID().toString(),
                 request.name(),
-                request.address(),
-                request.phone(),
-                request.email(),
-                FranchiseStatus.ACTIVE
+                DateUtils.nowBogota(),
+                DateUtils.nowBogota()
         );
     }
 
-    public FranchiseResponse toResponse(Franchise franchise) {
+    public FranchiseResponse toResponse(Franquicia franchise) {
         return new FranchiseResponse(
-                franchise.getId(),
-                franchise.getName(),
-                franchise.getAddress(),
-                franchise.getPhone(),
-                franchise.getEmail(),
-                franchise.getStatus()
+                franchise.getIdFranquicia(),
+                franchise.getNombre(),
+                franchise.getFechaCreacion(),
+                franchise.getFechaActualizacion()
         );
     }
 }

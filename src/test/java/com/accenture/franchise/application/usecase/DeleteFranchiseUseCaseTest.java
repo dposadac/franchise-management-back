@@ -1,15 +1,16 @@
 package com.accenture.franchise.application.usecase;
 
 import com.accenture.franchise.domain.exception.FranchiseNotFoundException;
-import com.accenture.franchise.domain.model.Franchise;
-import com.accenture.franchise.domain.model.FranchiseStatus;
-import com.accenture.franchise.domain.repository.FranchiseRepository;
+import com.accenture.franchise.domain.model.Franquicia;
+import com.accenture.franchise.domain.repository.FranquiciaRepository;
+import com.accenture.franchise.domain.service.FranchiseValidationService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -20,19 +21,21 @@ import static org.mockito.Mockito.*;
 @ExtendWith(MockitoExtension.class)
 class DeleteFranchiseUseCaseTest {
 
-    @Mock private FranchiseRepository franchiseRepository;
+    @Mock private FranquiciaRepository franchiseRepository;
+    @Mock private FranchiseValidationService franchiseValidationService;
 
     private DeleteFranchiseUseCase useCase;
 
     @BeforeEach
     void setUp() {
-        useCase = new DeleteFranchiseUseCase(franchiseRepository);
+        useCase = new DeleteFranchiseUseCase(franchiseRepository, franchiseValidationService);
     }
 
     @Test
     void execute_existingId_deletesSuccessfully() {
-        UUID id = UUID.randomUUID();
-        Franchise franchise = new Franchise(id, "Name", "Addr", "123", "a@b.com", FranchiseStatus.ACTIVE);
+        String id = UUID.randomUUID().toString();
+        LocalDateTime now = LocalDateTime.now();
+        Franquicia franchise = new Franquicia(id, "Test", now, now);
         when(franchiseRepository.findById(id)).thenReturn(Optional.of(franchise));
 
         assertDoesNotThrow(() -> useCase.execute(id));
@@ -41,7 +44,7 @@ class DeleteFranchiseUseCaseTest {
 
     @Test
     void execute_nonExistingId_throwsFranchiseNotFoundException() {
-        UUID id = UUID.randomUUID();
+        String id = UUID.randomUUID().toString();
         when(franchiseRepository.findById(id)).thenReturn(Optional.empty());
 
         assertThrows(FranchiseNotFoundException.class, () -> useCase.execute(id));

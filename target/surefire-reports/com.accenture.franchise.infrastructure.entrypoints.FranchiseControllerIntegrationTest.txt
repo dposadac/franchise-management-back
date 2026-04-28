@@ -1,4 +1,4 @@
 -------------------------------------------------------------------------------
 Test set: com.accenture.franchise.infrastructure.entrypoints.FranchiseControllerIntegrationTest
 -------------------------------------------------------------------------------
-Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.727 s -- in com.accenture.franchise.infrastructure.entrypoints.FranchiseControllerIntegrationTest
+Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 10.17 s -- in com.accenture.franchise.infrastructure.entrypoints.FranchiseControllerIntegrationTest

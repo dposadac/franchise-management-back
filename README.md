@@ -42,6 +42,9 @@ src/main/java/com/accenture/franchise/
         └── handler/     # GlobalExceptionHandler
 ```
 
+## Classes Diagram model
+
+![alt text](Analisis_Sistema_Ventas_Franquicia-03_DiagramaClases.jpg)
 ---
 
 ## Prerequisites

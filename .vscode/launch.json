@@ -1,0 +1,26 @@
+{
+    "configurations": [
+        {
+            "type": "java",
+            "name": "Run FranchiseApplication (local)",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.accenture.franchise.FranchiseApplication",
+            "projectName": "franchise-management-back",
+            "args": "",
+            "vmArgs": "-Dspring.profiles.active=local -Dserver.port=8085",
+            "envFile": "${workspaceFolder}/.env"
+        },
+        {
+            "type": "java",
+            "name": "Run JAR (local) - puerto 8085",
+            "request": "launch",
+            "cwd": "${workspaceFolder}",
+            "mainClass": "com.accenture.franchise.FranchiseApplication",
+            "projectName": "franchise-management-back",
+            "classPaths": ["${workspaceFolder}/target/franchise-management-back-0.0.1-SNAPSHOT.jar"],
+            "args": "",
+            "vmArgs": "-Dspring.profiles.active=local -Dserver.port=8085"
+        }
+    ]
+}

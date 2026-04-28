@@ -4,19 +4,18 @@ import com.accenture.franchise.application.dto.FranchiseResponse;
 import com.accenture.franchise.application.dto.UpdateFranchiseRequest;
 import com.accenture.franchise.application.mapper.FranchiseMapper;
 import com.accenture.franchise.domain.exception.FranchiseNotFoundException;
-import com.accenture.franchise.domain.model.Franchise;
-import com.accenture.franchise.domain.repository.FranchiseRepository;
+import com.accenture.franchise.domain.model.Franquicia;
+import com.accenture.franchise.domain.repository.FranquiciaRepository;
 import com.accenture.franchise.domain.service.FranchiseValidationService;
-
-import java.util.UUID;
+import com.accenture.franchise.infrastructure.shared.DateUtils;
 
 public class UpdateFranchiseUseCase {
 
-    private final FranchiseRepository franchiseRepository;
+    private final FranquiciaRepository franchiseRepository;
     private final FranchiseValidationService validationService;
     private final FranchiseMapper franchiseMapper;
 
-    public UpdateFranchiseUseCase(FranchiseRepository franchiseRepository,
+    public UpdateFranchiseUseCase(FranquiciaRepository franchiseRepository,
                                    FranchiseValidationService validationService,
                                    FranchiseMapper franchiseMapper) {
         this.franchiseRepository = franchiseRepository;
@@ -24,21 +23,21 @@ public class UpdateFranchiseUseCase {
         this.franchiseMapper = franchiseMapper;
     }
 
-    public FranchiseResponse execute(UUID id, UpdateFranchiseRequest request) {
-        Franchise existing = franchiseRepository.findById(id)
+    public FranchiseResponse execute(String id, UpdateFranchiseRequest request) {
+        Franquicia existing = franchiseRepository.findById(id)
                 .orElseThrow(() -> new FranchiseNotFoundException(id));
 
-        Franchise updated = new Franchise(
-                existing.getId(),
+        validationService.isUuidValidate(id);
+        
+        Franquicia updated = new Franquicia(
+                existing.getIdFranquicia(),
                 request.name(),
-                request.address(),
-                request.phone(),
-                request.email(),
-                existing.getStatus()
+                existing.getFechaCreacion(),
+                DateUtils.nowBogota()
         );
 
         validationService.validate(updated);
-        Franchise saved = franchiseRepository.save(updated);
+        Franquicia saved = franchiseRepository.save(updated);
         return franchiseMapper.toResponse(saved);
     }
 }

@@ -2,15 +2,15 @@ package com.accenture.franchise.application.usecase;
 
 import com.accenture.franchise.application.dto.FranchiseResponse;
 import com.accenture.franchise.application.mapper.FranchiseMapper;
-import com.accenture.franchise.domain.model.Franchise;
-import com.accenture.franchise.domain.model.FranchiseStatus;
-import com.accenture.franchise.domain.repository.FranchiseRepository;
+import com.accenture.franchise.domain.model.Franquicia;
+import com.accenture.franchise.domain.repository.FranquiciaRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
 
@@ -20,7 +20,7 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 class GetFranchisesUseCaseTest {
 
-    @Mock private FranchiseRepository franchiseRepository;
+    @Mock private FranquiciaRepository franchiseRepository;
     @Mock private FranchiseMapper franchiseMapper;
 
     private GetFranchisesUseCase useCase;
@@ -32,9 +32,10 @@ class GetFranchisesUseCaseTest {
 
     @Test
     void execute_returnsAllFranchises() {
-        UUID id = UUID.randomUUID();
-        Franchise franchise = new Franchise(id, "Name", "Addr", "123", "a@b.com", FranchiseStatus.ACTIVE);
-        FranchiseResponse response = new FranchiseResponse(id, "Name", "Addr", "123", "a@b.com", FranchiseStatus.ACTIVE);
+        String id = UUID.randomUUID().toString();
+        LocalDateTime now = LocalDateTime.now();
+        Franquicia franchise = new Franquicia(id, "Test Franchise", now, now);
+        FranchiseResponse response = new FranchiseResponse(id, "Test Franchise", now, now);
 
         when(franchiseRepository.findAll()).thenReturn(List.of(franchise));
         when(franchiseMapper.toResponse(franchise)).thenReturn(response);

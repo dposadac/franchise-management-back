@@ -1,14 +1,10 @@
 package com.accenture.franchise.application.dto;
 
-import com.accenture.franchise.domain.model.FranchiseStatus;
-
-import java.util.UUID;
+import java.time.LocalDateTime;
 
 public record FranchiseResponse(
-        UUID id,
+        String id,
         String name,
-        String address,
-        String phone,
-        String email,
-        FranchiseStatus status
+        LocalDateTime creationDate,
+        LocalDateTime lastUpdated
 ) {}
